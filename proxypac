@@ -1,0 +1,45 @@
+#!/bin/bash
+
+cd "$(dirname "$0")"
+
+PORT=8082
+ROOT=root
+
+main() {
+    case "$1" in
+        start) start ;;
+        stop) stop ;;
+        status) status ;;
+        *) echo "usage: $0 [start|stop|status]" ; exit 1; ;;
+    esac
+}
+
+start() {
+    cd "$(dirname "$0")"
+    echo "Enabling proxy; press Ctrl-C to terminate and clean up..."
+    networksetup -setautoproxyurl "Wi-Fi" "http://127.0.0.1:$PORT/proxy.pac"
+    networksetup -getautoproxyurl "Wi-Fi"
+    python3 -m http.server -d "$ROOT" -b 127.0.0.1 "$PORT"
+    # and after ctrl-c
+    disable_proxy
+}
+
+status() {
+    lsof -nP -i ":$PORT" -sTCP:LISTEN
+    networksetup -getautoproxyurl "Wi-Fi"
+}
+
+stop() {
+    lsof -n -i ":$PORT" -sTCP:LISTEN
+    lsof -n -i ":$PORT" -sTCP:LISTEN | awk 'NR > 1 {print $2}' | xargs kill
+    disable_proxy
+}
+
+disable_proxy() {
+    ## "" doesn't work, but shutting it off works fine. Using " " may work.
+    # networksetup -setautoproxyurl "Wi-Fi" ""
+    networksetup -setautoproxystate "Wi-Fi" off
+    networksetup -getautoproxyurl "Wi-Fi"
+}
+
+main "$@"

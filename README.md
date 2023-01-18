@@ -40,6 +40,16 @@ function FindProxyForURL(url, host) {
 }
 ```
 
+## SSL
+
+In macOS 12 Monterey, using HTTP to access PAC files is deprecated in favor of HTTPS.
+`http://` will still work, but a TLS handshake is attempted first on every connection,
+despite the insecure protocol. This will result in lots of garbage in the logs.
+
+This seems like suboptimal behavior, because of the explicit protocol and because port 8082
+is earmarked as being for cleartext PAC transmission.
+
 ## Alternatives
 
 Placing a proxy.pac file a public gist as per [this stackexchange post](https://apple.stackexchange.com/a/396773/287722) works, as long as your file is not secret, and you are OK with leaving it enabled all the time.
+This will also take care of the SSL requirement introduced in macOS 12.
